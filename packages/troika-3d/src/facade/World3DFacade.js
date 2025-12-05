@@ -113,8 +113,12 @@ class World3DFacade extends WorldBaseFacade {
 
   doRender(/*...frameArgs*/) {
     let sceneFacade = this.getChildByKey('scene')
+    let cameraFacade = this.getChildByKey('camera')
+    if (!sceneFacade || !cameraFacade || !sceneFacade.threeObject || !cameraFacade.threeObject) {
+      return
+    }
     let scene = sceneFacade.threeObject
-    let camera = this.getChildByKey('camera').threeObject
+    let camera = cameraFacade.threeObject
     let renderer = this._threeRenderer
 
     // Invoke any onBeforeRender listeners

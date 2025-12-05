@@ -45,15 +45,31 @@ export function createCameraFacade(threeJsCameraClass, projectionProps, otherPro
     afterUpdate() {
       // Apply lookAt+up as a final transform - applied as individual quaternion
       // properties so they can selectively trigger updates, be transitioned, etc.
-      if (this.lookAt) {
-        tempVec3.copy(this.lookAt)
-        lookAtUp.copy(this.up || Object3D.DefaultUp)
-        tempMat4.lookAt(this.threeObject.position, tempVec3, lookAtUp)
-        tempQuat.setFromRotationMatrix(tempMat4)
-        this.quaternionX = tempQuat.x
-        this.quaternionY = tempQuat.y
-        this.quaternionZ = tempQuat.z
-        this.quaternionW = tempQuat.w
+      if (this.lookAt && this.threeObject && this.lookAt !== null) {
+        const lookAt = this.lookAt
+        // Safely extract x, y, z values, defaulting to 0 if not present
+        if (lookAt && typeof lookAt === 'object') {
+          tempVec3.set(
+            lookAt.x != null ? lookAt.x : 0,
+            lookAt.y != null ? lookAt.y : 0,
+            lookAt.z != null ? lookAt.z : 0
+          )
+          // Safely handle up vector
+          const up = this.up || (Object3D.DefaultUp || lookAtUp)
+          if (up && typeof up === 'object') {
+            lookAtUp.set(
+              up.x != null ? up.x : 0,
+              up.y != null ? up.y : 1,
+              up.z != null ? up.z : 0
+            )
+          }
+          tempMat4.lookAt(this.threeObject.position, tempVec3, lookAtUp)
+          tempQuat.setFromRotationMatrix(tempMat4)
+          this.quaternionX = tempQuat.x
+          this.quaternionY = tempQuat.y
+          this.quaternionZ = tempQuat.z
+          this.quaternionW = tempQuat.w
+        }
       }
       super.afterUpdate()
     }
