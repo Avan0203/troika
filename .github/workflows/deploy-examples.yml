@@ -1,0 +1,73 @@
+name: Deploy Examples to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/troika-examples/**'
+      - 'packages/troika-*/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build packages
+        run: pnpm run build
+
+      - name: Build examples
+        run: pnpm run build-examples
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Prepare deployment files
+        run: |
+          mkdir -p _site
+          cp packages/troika-examples/index.html _site/
+          cp packages/troika-examples/index.css _site/
+          cp -r packages/troika-examples/dist _site/
+          cp packages/troika-examples/GitHub-Mark-64px.png _site/ 2>/dev/null || true
+          # 复制示例需要的资源文件
+          cp -r packages/troika-examples/globe _site/ 2>/dev/null || true
+          cp -r packages/troika-examples/shader-anim _site/ 2>/dev/null || true
+          cp -r packages/troika-examples/globe-connections _site/ 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
